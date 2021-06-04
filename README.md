@@ -1,5 +1,5 @@
 # JSURL
-![Github Workflow Status](https://img.shields.io/github/workflow/status/gan-of-culture/jsurl/go)
+![Github Workflow Status](https://img.shields.io/github/workflow/status/gan-of-culture/jsurl/Go)
 
 Golang port for [jsurl](https://github.com/Sage/jsurl)
 
