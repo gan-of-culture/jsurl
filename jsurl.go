@@ -23,6 +23,7 @@ func init() {
 	reDefault2 = regexp.MustCompile(`[\d\-]`)
 }
 
+// Stringify an interface to result in a jsurl string
 func Stringify(itf interface{}) string {
 	tmp := []string{}
 
@@ -108,6 +109,7 @@ func encode(s string) string {
 	return out
 }
 
+// Parse a jsurl string into a struct
 func Parse(s string, itf interface{}) error {
 	if s == "" {
 		return nil
@@ -119,7 +121,7 @@ func Parse(s string, itf interface{}) error {
 
 	runeSliceOfS := []rune(s)
 
-	rs, _, err := parseOne(runeSliceOfS, i, len)
+	rs, err := parseOne(runeSliceOfS, &i, len)
 	if err != nil {
 		return err
 	}
@@ -137,81 +139,80 @@ func Parse(s string, itf interface{}) error {
 	return nil
 }
 
-func eat(s []rune, i int, expected rune) (int, error) {
-	if s[i] != expected {
-		return i, fmt.Errorf("bad JSURL syntax: expected %s, got %s", string(s[i]), string(expected))
+func eat(s []rune, i *int, expected rune) error {
+	if s[*i] != expected {
+		return fmt.Errorf("bad JSURL syntax: expected %s, got %s", string(s[*i]), string(expected))
 	}
-	i += 1
-	return i, nil
+	*i += 1
+	return nil
 }
 
-func decode(s []rune, i int, len int) (int, string) {
-	beg := i
+func decode(s []rune, i *int, len int) string {
+	beg := *i
 	var ch rune
 	r := ""
 
-	for i < len {
-		ch = s[i]
+	for *i < len {
+		ch = s[*i]
 		//~ = 0x7E || ) 0x29
 		if ch == 0x7E || ch == 0x29 {
 			break
 		}
 		switch ch {
 		case '*':
-			if beg < i {
-				r += string(s[beg:i])
+			if beg < *i {
+				r += string(s[beg:*i])
 			}
-			if s[i+1] == '*' {
-				cCode, _ := strconv.ParseInt(string(s[i+2:i+6]), 16, 32)
+			if s[*i+1] == '*' {
+				cCode, _ := strconv.ParseInt(string(s[*i+2:*i+6]), 16, 32)
 				r += string(rune(cCode))
-				i += 6
-				beg = i
+				*i += 6
+				beg = *i
 				break
 			}
-			cCode, _ := strconv.ParseInt(string(s[i+1:i+3]), 16, 32)
+			cCode, _ := strconv.ParseInt(string(s[*i+1:*i+3]), 16, 32)
 			r += string(rune(cCode))
-			i += 3
-			beg = i
+			*i += 3
+			beg = *i
 		case '!':
-			if beg < i {
-				r += string(s[beg:i])
+			if beg < *i {
+				r += string(s[beg:*i])
 			}
 			r += "$"
-			i += 1
-			beg = i
+			*i += 1
+			beg = *i
 		default:
-			i += 1
+			*i += 1
 		}
 	}
-	return i, r + string(s[beg:i])
+	return r + string(s[beg:*i])
 }
 
-func parseOne(s []rune, i int, len int) (interface{}, int, error) {
+func parseOne(s []rune, i *int, len int) (interface{}, error) {
 	var result interface{}
 	var beg int
 
-	i, err := eat(s, i, '~')
+	err := eat(s, i, '~')
 	if err != nil {
-		return result, i, err
+		return result, err
 	}
 
-	ch := s[i]
+	ch := s[*i]
 	switch ch {
 	case '(':
-		i += 1
-		if s[i] == '~' {
+		*i += 1
+		if s[*i] == '~' {
 			out := []interface{}{}
-			if s[i+1] == ')' {
-				i += 1
+			if s[*i+1] == ')' {
+				*i += 1
 			} else {
 				for {
-					var rs interface{}
-					rs, i, err = parseOne(s, i, len)
+					rs, err := parseOne(s, i, len)
 					if err != nil {
-						return result, i, err
+						return result, err
 					}
 					out = append(out, rs)
-					if s[i] != '~' {
+					if s[*i] != '~' {
 						break
 					}
 				}
@@ -219,53 +220,52 @@ func parseOne(s []rune, i int, len int) (interface{}, int, error) {
 			result = out
 		} else {
 			out := map[string]interface{}{}
-			if s[i] != ')' {
+			if s[*i] != ')' {
 				for {
-					key := ""
-					i, key = decode(s, i, len)
-					out[key], i, err = parseOne(s, i, len)
+					key := decode(s, i, len)
+					out[key], err = parseOne(s, i, len)
 					if err != nil {
-						return result, i, err
+						return result, err
 					}
 
-					if s[i] != '~' {
+					if s[*i] != '~' {
 						break
 					}
-					i += 1
+					*i += 1
 				}
 			}
 			result = out
 		}
-		i, err = eat(s, i, ')')
+		err = eat(s, i, ')')
 		if err != nil {
-			return result, i, err
+			return result, err
 		}
 	case 0x27: //thats '
-		i += 1
-		i, result = decode(s, i, len)
+		*i += 1
+		result = decode(s, i, len)
 	default:
-		beg = i
-		i += 1
-		for i < len {
-			if !reDefault.MatchString(string(s[i])) {
+		beg = *i
+		*i += 1
+		for *i < len {
+			if !reDefault.MatchString(string(s[*i])) {
 				break
 			}
-			i += 1
+			*i += 1
 		}
-		sub := string(s[beg:i])
+		sub := string(s[beg:*i])
 		if reDefault2.MatchString(string(ch)) {
 			rs, err := strconv.ParseFloat(sub, 64)
 			if err != nil {
-				return result, i, err
+				return result, err
 			}
 			result = rs
 		} else {
 			rs, ok := reserved[sub]
 			if !ok {
-				return result, i, fmt.Errorf("bad value keyword: %s", sub)
+				return result, fmt.Errorf("bad value keyword: %s", sub)
 			}
 			result = rs
 		}
 	}
-	return result, i, nil
+	return result, nil
 }
