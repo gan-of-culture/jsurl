@@ -47,7 +47,7 @@ func main() {
 }
 ```
 
-For more examples please take a look at the [unittests](jsurl/jsurl_test.go)
+For more examples please take a look at the [unittests](jsurl_test.go)
 
 ## License
 
