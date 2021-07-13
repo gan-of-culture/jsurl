@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gan-of-culture/jsurl/jsurl"
+	"github.com/gan-of-culture/jsurl"
 )
 
 type demoStruct struct {
