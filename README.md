@@ -1,5 +1,5 @@
 # JSURL
-![Github Workflow Status](https://img.shields.io/github/workflow/status/gan-of-culture/jsurl/Go)
+[![Go](https://github.com/gan-of-culture/jsurl/actions/workflows/go.yml/badge.svg)](https://github.com/gan-of-culture/jsurl/actions/workflows/go.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gan-of-culture/jsurl)](https://goreportcard.com/report/github.com/gan-of-culture/jsurl)
 [![Go Reference](https://pkg.go.dev/badge/github.com/gan-of-culture/jsurl.svg)](https://pkg.go.dev/github.com/gan-of-culture/jsurl)
 
